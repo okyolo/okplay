@@ -19,6 +19,12 @@
  *
  * 名字带「源码安装」四个字，**不会覆盖**打包版建的那个 `OKPlay.lnk`。
  *
+ * ## macOS
+ *
+ * macOS 没有「快捷方式」这个概念，等价物是一个 `.app`。这里用 `osacompile`
+ * 生成一个 AppleScript 小应用放到桌面：双击即启动，不弹终端窗口；
+ * 图标取自 `src/assets/icon.png`（sips + iconutil 转 .icns）。
+ *
  * 用法：npm run shortcut
  */
 
@@ -29,8 +35,13 @@ import { dirname, join } from 'node:path';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 
+if (process.platform === 'darwin') {
+  createMacShortcut();
+  process.exit(0);
+}
+
 if (process.platform !== 'win32') {
-  console.error('这个脚本只做 Windows 快捷方式。macOS 直接用 `npm start`。');
+  console.error('目前只支持 Windows 与 macOS。其它平台直接用 `npm start`。');
   process.exit(1);
 }
 
@@ -79,3 +90,66 @@ if (!existsSync(lnk)) {
 
 console.log(`已在桌面创建：${lnk}`);
 console.log('双击即可启动 OKPlay（不需要开终端）。');
+
+
+/**
+ * macOS：在桌面生成一个 `OKPlay-源码安装.app`。
+ *
+ * 启动方式与 Windows 快捷方式等价 —— 直接跑 Electron 二进制、把仓库根目录
+ * 作为参数传进去（不经过 `npm start`，所以不会弹终端）。
+ */
+function createMacShortcut() {
+  const electronApp = join(root, 'node_modules', 'electron', 'dist', 'Electron.app');
+  if (!existsSync(electronApp)) {
+    console.error(`找不到 Electron.app：${electronApp}`);
+    console.error('先跑 `npm install` 把依赖装好。');
+    process.exit(1);
+  }
+
+  const launcher = join(root, 'scripts', 'launch-mac.sh');
+  const out = join(process.env.HOME ?? '', 'Desktop', 'OKPlay-源码安装.app');
+  const iconSrc = join(root, 'src', 'assets', 'icon.png');
+
+  // 覆盖旧的：重复跑不该失败
+  try { execFileSync('rm', ['-rf', out]); } catch { /* 不存在就算了 */ }
+
+  /**
+   * AppleScript 只做一件事：把启动脚本丢到后台。
+   * `nohup ... &` 让 AppleScript 立刻返回，applet 自行退出，不会吊着。
+   * 双引号与反斜杠按 AppleScript 字符串转义。
+   */
+  const shellCmd = `nohup "${launcher}" > /tmp/okplay-start.log 2>&1 &`;
+  const escaped = shellCmd.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  const applescript = `do shell script "${escaped}"`;
+
+  try {
+    execFileSync('osacompile', ['-o', out, '-e', applescript], { stdio: 'inherit' });
+  } catch {
+    console.error('osacompile 失败：没能生成 .app。');
+    process.exit(1);
+  }
+
+  // 图标：png → iconset → icns，贴到 applet 的 Resources/applet.icns
+  if (existsSync(iconSrc)) {
+    try {
+      const iconset = join(root, '.shortcut-iconset');
+      execFileSync('rm', ['-rf', iconset]);
+      execFileSync('mkdir', ['-p', iconset]);
+      for (const size of [16, 32, 64, 128, 256, 512]) {
+        execFileSync('sips', ['-z', String(size), String(size), iconSrc, '--out', join(iconset, `icon_${size}x${size}.png`)]);
+        execFileSync('sips', ['-z', String(size * 2), String(size * 2), iconSrc, '--out', join(iconset, `icon_${size}x${size}@2x.png`)]);
+      }
+      const icns = join(root, 'build', 'shortcut.icns');
+      execFileSync('iconutil', ['-c', 'icns', iconset, '-o', icns]);
+      execFileSync('cp', [icns, join(out, 'Contents', 'Resources', 'applet.icns')]);
+      execFileSync('rm', ['-rf', iconset, icns]);
+      // 让 Finder 重新读图标
+      execFileSync('touch', [out]);
+    } catch {
+      console.warn('图标生成失败，.app 仍可用（会用系统默认图标）。');
+    }
+  }
+
+  console.log(`已在桌面创建：${out}`);
+  console.log('双击即可启动（不弹终端）。');
+}

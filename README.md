@@ -66,11 +66,12 @@ npm start
 git clone https://github.com/okyolo/okplay.git
 cd okplay
 npm install
+npm run shortcut   # 可选：在桌面生成 OKPlay-源码安装.app（双击启动，不弹终端）
 npm start
 ```
 
-> `npm run shortcut` **只支持 Windows**（macOS 上会直接提示），macOS 每次用 `npm start` 启动；
-> 想要图标可以自己用「自动操作（Automator）」或快捷指令包一层。
+> macOS 上没有「快捷方式」，`npm run shortcut` 会生成一个 `.app`：
+> 图标取自 `src/assets/icon.png`，双击直接启动，日志在 `/tmp/okplay-start.log`。
 >
 > macOS 上如果首次运行提示「无法打开 Electron」，执行一次：
 > `xattr -dr com.apple.quarantine node_modules/electron/dist/Electron.app`

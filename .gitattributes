@@ -1,0 +1,18 @@
+# ── 行尾 ──────────────────────────────────────────────────────
+#
+# Windows 批处理文件**必须是 CRLF**。
+#
+# 原因：cmd.exe 按行读 .bat，LF-only 的文件会让它把每一行都拆错、
+# 当成非法命令去执行（实测崩过，症状是刷一屏 "is not recognized as
+# an internal or external command"）。而中文更容易触发 —— 见
+# scripts/make-shortcut-bat.mjs 的注释。
+#
+# 为什么必须写在这里、不能指望本机配置：`core.autocrlf` 是**每个人各自的**
+# 本地设置。这台开发机是 true，但别人克隆时常见 false 或 input（Linux/macOS
+# 默认如此），那样签出来的 .bat 就是 LF，直接坏掉。钉在仓库里才可靠。
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# ── 其余保持仓库里的原样 ──────────────────────────────────────
+# 刻意不写 `* text=auto` —— 那会把所有文件重新规范化一遍，
+# 首次提交产生一份巨大的、与本次改动无关的 diff。

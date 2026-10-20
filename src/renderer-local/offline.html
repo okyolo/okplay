@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>无法连接 - OKPlay</title>
+  <!--
+    这是客户端唯一自带的本地页面。
+    必须不依赖任何远程资源 —— 它存在的意义就是「云端连不上时还能显示点东西」。
+    因此样式全部内联，不引用外部 CSS、字体或图片。
+  -->
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      background: #05010d;
+      color: #fff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 32px 20px;
+      background: radial-gradient(ellipse at 50% 35%, #21113b 0%, #0c0618 44%, #05010d 78%);
+    }
+    .card {
+      width: min(100%, 460px);
+      padding: 36px 40px 32px;
+      border: 1px solid rgba(255, 255, 255, .22);
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(255, 255, 255, .105), rgba(255, 255, 255, .045));
+      box-shadow: 0 28px 90px rgba(0, 0, 0, .4);
+      text-align: center;
+    }
+    .eyebrow { margin: 0 0 10px; color: #d494ff; font-size: 12px; letter-spacing: .16em; }
+    h1 { margin: 0; font-size: 24px; font-weight: 650; }
+    .detail {
+      margin: 14px 0 0;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(5, 1, 13, .5);
+      color: rgba(255, 255, 255, .62);
+      font-size: 13px;
+      line-height: 1.7;
+      word-break: break-all;
+    }
+    .actions { display: flex; gap: 10px; margin-top: 26px; }
+    button {
+      flex: 1;
+      min-height: 46px;
+      border: 1px solid rgba(255, 255, 255, .22);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .06);
+      color: #fff;
+      font: inherit;
+      font-size: 15px;
+      cursor: pointer;
+      transition: filter .2s, background .2s;
+    }
+    button:hover { background: rgba(255, 255, 255, .1); }
+    button.primary {
+      border: 0;
+      background: linear-gradient(131deg, #f85e76 3%, #a324b0 30%, #514fd8 72%, #2baedf 100%);
+      font-weight: 700;
+    }
+    button.primary:hover { filter: brightness(1.12); }
+    .hint { margin: 18px 0 0; color: rgba(255, 255, 255, .42); font-size: 12px; line-height: 1.7; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <p class="eyebrow">OKPLAY</p>
+    <h1 id="reason">无法连接 OKPlay 服务</h1>
+    <p class="detail" id="detail">正在读取错误信息…</p>
+
+    <div class="actions">
+      <button class="primary" id="retry" type="button">重试</button>
+      <button id="quit" type="button">退出</button>
+    </div>
+
+    <p class="hint">
+      若多次重试仍失败，请确认网络可用，或联系课程管理员。<br />
+      <span id="version"></span>
+    </p>
+  </div>
+
+  <script>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      const reason = params.get('reason');
+      const detail = params.get('detail');
+
+      if (reason) document.getElementById('reason').textContent = reason;
+      if (detail) document.getElementById('detail').textContent = detail;
+
+      const bridge = window.okplay;
+
+      // 这个页面可能在任何情况下被加载 —— 包括 preload 还没就绪时。
+      // 所以每个调用都要先判存在。
+      document.getElementById('retry').addEventListener('click', () => {
+        if (bridge && typeof bridge.reload === 'function') bridge.reload();
+        else location.reload();
+      });
+
+      document.getElementById('quit').addEventListener('click', () => {
+        if (bridge && typeof bridge.quit === 'function') bridge.quit();
+      });
+
+      if (bridge && bridge.platform) {
+        document.getElementById('version').textContent =
+          '客户端 ' + bridge.platform.appVersion + ' · Electron ' + bridge.platform.electronVersion;
+      }
+    })();
+  </script>
+</body>
+</html>

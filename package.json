@@ -1,0 +1,30 @@
+{
+  "name": "ok-play",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OK基地课程桌面客户端",
+  "author": "OK BASE",
+  "license": "UNLICENSED",
+  "main": "dist/main/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "postinstall": "node scripts/ensure-electron.mjs",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc -p tsconfig.json && node scripts/copy-static.mjs",
+    "start": "npm run build && electron .",
+    "dev": "npm run build && electron . --dev",
+    "test": "node --no-warnings --test test/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify": "npm run typecheck && node scripts/check-security-baseline.mjs",
+    "shortcut": "node scripts/create-shortcut.mjs",
+    "dist": "npm run verify && node scripts/make-shortcut-bat.mjs && npm run build && electron-builder --win"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "electron": "44.5.1",
+    "electron-builder": "^26.15.3",
+    "typescript": "^5.7.2"
+  }
+}

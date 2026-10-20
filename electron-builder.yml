@@ -1,0 +1,101 @@
+# electron-builder 配置 —— **只做 Windows**。
+#
+# 为什么没有 mac 段：macOS 未签名 + 未公证的包，在 Apple Silicon 上会被
+# Gatekeeper 报「已损坏，请移到废纸篓」（文案误导，且要 `xattr` 才能解，学员做不到）。
+# macOS 因此只提供**源码安装** —— 跑的是 Electron 官方已签名并公证的二进制。
+# 详见 README「安装」。
+#
+# 用法：npm run dist
+# 产出：release/OKPlay-<版本>-setup.exe   （安装版，可直接双击装）
+#       release/OKPlay-<版本>-x64.zip     （免安装版，解压即用）
+
+appId: cn.okbase.okplay
+productName: OKPlay
+
+directories:
+  output: release
+  buildResources: build
+
+# 只带运行时要的东西。**src/ 不进包** —— 主进程跑的是编译后的 dist/。
+# 连 .map 一起排掉：源码映射把 TypeScript 原文带进产物，白白增大体积。
+files:
+  - package.json
+  - dist/**/*
+  - '!**/*.map'
+  # 登录视频走下面的 extraResources（asar 外、可被流式读取），
+  # 这里排掉 copy-static 复制进来的那一份，免得包里存两份 1.2 MB。
+  - '!dist/assets/login-bg.mp4'
+
+asar: true
+
+# 打包用最高压缩。**只影响构建耗时和产物大小，不影响运行** ——
+# 安装包是一次性下载的东西，多花几分钟压得更小是划算的。
+#
+# 不设这一项时 electron-builder 用默认档，实测安装包 111.9 MB。
+# （具体能省多少没有重新打包量过 —— 这一项是纯构建期开关，
+# 想验就跑一次 `npm run dist` 对比 release/ 下两个 exe。NSIS 那档吃 LZMA 最明显。）
+compression: maximum
+
+# 只带用得上的语言包。
+#
+# **不设这一项 = Electron 的 55 个语言包全打进去**（实测 49 MB，其中 ta/ml/kn/te/hi
+# 各 1.6~1.7 MB）。产品是纯中文的（两处 index.html 都是 lang="zh-CN"），
+# 多出来的那些永远读不到。
+#
+# 留 en-US 是兜底：Electron 自身的一些提示与 DevTools 走的是它，
+# 而 devtools 偶尔要看，删干净了反而麻烦。
+electronLanguages:
+  - zh-CN
+  - en-US
+
+# 一键建桌面图标的脚本，随包发出去。
+#
+# 免安装版（zip）是「解压即用」，**没有安装器，所以没人给学生建快捷方式** ——
+# 学生得自己右键 → 发送到 → 桌面快捷方式。多数人不会。这个 .bat 补上那一步。
+#
+# 它也会出现在安装版的目录里（extraFiles 对两种 target 都生效）。安装版本来就
+# 由 nsis 建好了快捷方式，所以那个 .bat 是多余的，但无害 —— 学生删了快捷方式
+# 之后还能拿它重建。
+#
+# 那个 .bat 由 `node scripts/make-shortcut-bat.mjs` 生成，**不要手改**。
+extraFiles:
+  - from: build/创建桌面快捷方式.bat
+    to: 创建桌面快捷方式.bat
+
+# 客户端自带的登录视频（用户 2026-10-19：打进桌面端，开窗即播、不占网络）。
+# 放 asar 外：主进程用 fs 读 + 自己实现 Range 响应，见 src/main/localAssets.ts。
+extraResources:
+  - from: src/assets/login-bg.mp4
+    to: assets/login-bg.mp4
+
+# 一切都在本地做，不让它去猜发布渠道。
+publish: null
+
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: zip
+      arch: [x64]
+  # 免安装版（zip）与安装版共用同一个命名模板，靠 nsis.artifactName 区分。
+  artifactName: ${productName}-${version}-${arch}.${ext}
+
+nsis:
+  # 走安装向导，不静默装 —— 学员能选装到哪、能看见在装什么。
+  oneClick: false
+  # 装到用户目录（%LOCALAPPDATA%\Programs\OKPlay），**不触发 UAC**。
+  # 代价是每个 Windows 账户各装一份；换来的是学员不需要管理员权限。
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: OKPlay
+  # 卸载**保留** %APPDATA%\ok-play —— 里面是 device_id 与登录态。
+  # 删掉的话，学员重装会被当成新设备，撞上「设备数上限」。
+  deleteAppDataOnUninstall: false
+  artifactName: ${productName}-${version}-setup.${ext}
+
+# 不做签名（见 README「分发」）。
+# Windows 首次运行会出现 SmartScreen 提示：「更多信息」→「仍要运行」。
+# 想彻底消掉这个提示需要买代码签名证书，那是独立的一项决策，配置里不预埋。

@@ -1,0 +1,73 @@
+# ── 依赖与构建产物 ──────────────────────────────
+node_modules/
+dist/
+out/
+release/
+*.log
+npm-debug.log*
+
+# ── 环境与密钥 ─────────────────────────────────
+.env
+.env.*
+!.env.example
+# 例外：开发态默认值，不含任何密钥。缺了它新克隆的人开发服务器起不来。
+!web/.env.development
+
+# ── 内部文档（不随本仓库公开）───────────────────
+/okplay-prd.md
+/AGENTS.md
+/CLAUDE.md
+/.learnings/
+/docs/
+
+# ── 安全审计过程文件（内部）─────────────────────
+# 这些报告里有生产 IP、主机指纹、生产域名，以及**完整的漏洞清单与修复经过** ——
+# 对攻击者就是一张现成的地图。它们散落在仓库根目录，一个 `git add -A` 就会推进
+# 公开仓库。**不删，只忽略**（本地还是要留）。
+# 里面没有凭据值（已逐项扫过）。
+/acl-before-remediation.txt
+/findings.md
+/fix_summary.md
+/progress.md
+/retest_report.md
+/security_report.md
+/shannon_verified_findings.md
+/strix_findings.md
+/task_plan.md
+/tests_added.md
+
+# ── 明文口令（只放本地，绝不进公开仓库）──────────
+# 本仓库远端是公开的。这个目录里是整站备份口令一类的明文秘密，
+# 一旦被跟踪就等于公开。**不要**用 -f 强加，也不要改这条规则。
+/口令/
+
+# ── 原型与媒体素材（体积大，不属于本仓库范围）───
+/原型/
+# 本地开发用的 HLS 产物（从 原型/ 复制过来，仅供 dev 服务器播放）
+/web/public/course-media/
+/web/.env.local
+
+# ── 操作系统杂项 ───────────────────────────────
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# 管理后台前端（闭源，只放本地）
+/admin/
+
+# 学员端页面（2026-10-20：不随公开仓库分发，公开仓库 = 桌面客户端）
+# 本地仍有这个目录，开发时照常用；它有自己的独立 git 仓库。
+/web/
+
+# 上传的文件（课程封面等），不进仓库
+/server/uploads/
+
+# 服务端（闭源，只放本地）—— README 与 PRD 都写明它不在公开仓库里
+/server/
+
+# 散落的重复图标（原型的拷贝，误入仓库）
+/icon.ico
+
+# codegraph 的本地索引（自己带 .gitignore，但那个文件本身不被它忽略，
+# 于是整个目录会冒在 git status 里。这里显式排掉。）
+/.codegraph/

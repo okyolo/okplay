@@ -17,7 +17,9 @@
  *   WorkDir  <仓库根目录>
  *   Icon     src/assets/icon.ico
  *
- * 名字带「源码安装」四个字，**不会覆盖**打包版建的那个 `OKPlay.lnk`。
+ * 名字是 `okplay.lnk`（2026-10-21 由 `OKPlay-源码安装.lnk` 改来，与 macOS 的
+ * `okplay.app` 对齐）。注意 Windows 文件名不区分大小写 —— 若同机装过打包版，
+ * 打包版那个 `OKPlay.lnk` 是**同一个文件**，会被这里覆盖。
  *
  * ## macOS
  *
@@ -29,11 +31,26 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, rmSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
+
+/**
+ * 删掉同名旧文件再建。
+ *
+ * Windows 文件名不区分大小写：桌面上已有 `OKPlay.lnk` 时，写到 `okplay.lnk`
+ * 会命中同一个文件、**保留原来的大小写**，用户看到的还是 `OKPlay.lnk`。
+ * 先删掉，新文件才会用脚本里写的这个名字。
+ */
+function removeExisting(path) {
+  try {
+    if (existsSync(path)) rmSync(path, { force: true });
+  } catch {
+    // 删不掉就让 CreateShortcut 去覆盖，不额外报错。
+  }
+}
 
 if (process.platform === 'darwin') {
   ensureBuild();
@@ -56,7 +73,8 @@ if (!existsSync(electronExe)) {
 }
 
 const icon = join(root, 'src', 'assets', 'icon.ico');
-const lnk = join(process.env.USERPROFILE ?? '', 'Desktop', 'OKPlay-源码安装.lnk');
+const lnk = join(process.env.USERPROFILE ?? '', 'Desktop', 'okplay.lnk');
+removeExisting(lnk);
 
 /**
  * 交给 PowerShell 建 .lnk。

@@ -57,7 +57,7 @@ git clone https://github.com/okyolo/okplay.git
 cd okplay
 npm install
 npm start            # 先跑一次，确认窗口能打开（这一步同时完成构建）
-npm run shortcut     # 可选：在桌面建一个图标，以后双击就能开
+npm run shortcut     # 可选：在桌面建 okplay.lnk，以后双击就能开
 ```
 
 **macOS**

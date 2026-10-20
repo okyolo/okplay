@@ -30,6 +30,20 @@ if (!app.isPackaged) {
 // Windows 任务栏归组与通知标识。
 app.setAppUserModelId(APP_ID);
 
+/**
+ * **桌面端一律直连，不走系统代理。**
+ *
+ * 2026-10-21 实测：用户开着日本出口的代理（ZodAccess），课程域名走的是
+ * 阿里云「中国内地」CDN —— 海外出口连不上，整个客户端表现为一直转圈 /
+ * `ERR_CONNECTION_CLOSED`，而同一台机器直连正常。
+ *
+ * 客户端的目标用户在国内，系统代理对他们只是风险（翻墙软件、公司代理都可能
+ * 让课程域名解析到错的节点）。真要用代理访问别的东西，在浏览器里开，不影响这里。
+ *
+ * 必须在 `whenReady` 之前设置，且对所有 session 生效。
+ */
+app.commandLine.appendSwitch('no-proxy-server');
+
 // 本地媒体用的自定义 scheme。**必须在 whenReady 之前注册**，这是 Electron 的硬性要求。
 registerAssetScheme();
 

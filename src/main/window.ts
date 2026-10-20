@@ -24,12 +24,22 @@ import { applyPermissionPolicy } from './security/permissions';
  */
 const DEVTOOLS_SHORTCUTS = new Set(['I', 'J', 'C']);
 
-export function createMainWindow(config: AppConfig): BrowserWindow {
+/**
+ * session 级的一次性设置：权限、请求头注入、本地资源协议。
+ *
+ * **必须只做一次。** `protocol.handle()` 重复注册会抛
+ * `Failed to register protocol` —— 而它原来在 `createMainWindow()` 里。
+ * macOS 关窗后点 Dock 图标会再跑一遍 `bootstrap()`，异常发生在
+ * `new BrowserWindow()` **之前**，于是窗口永远建不起来（2026-10-21 实测）。
+ */
+export function setupSession(config: AppConfig): void {
   const partition = session.fromPartition(SESSION_PARTITION);
   applyPermissionPolicy(partition);
   applyHeaderPolicy(partition, config);
   applyLocalAssetProtocol(partition);
+}
 
+export function createMainWindow(config: AppConfig): BrowserWindow {
   // 与 origin 的判据保持一致：**只有 `--dev` 才是开发模式**（见 config.ts 的 isDevMode）。
   // 源码安装同样没打包，但它是给学员用的 —— 不该默认开 devtools。
   const devMode = isDevMode();

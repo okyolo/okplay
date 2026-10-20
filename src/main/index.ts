@@ -8,7 +8,7 @@ import { registerIpcHandlers } from './ipc';
 import { applyFailoverPolicy, showOfflinePage } from './lifecycle/failover';
 import { registerAssetScheme } from './localAssets';
 import { log } from './log';
-import { createMainWindow } from './window';
+import { createMainWindow, setupSession } from './window';
 
 // ────────────────────────────────────────────────────────────────
 // 必须在任何 app.getPath('userData') 之前完成。
@@ -50,6 +50,24 @@ const config = resolveConfig();
 
 let mainWindow: BrowserWindow | null = null;
 
+/**
+ * 进程级的一次性注册：session 策略（权限 / 请求头 / 本地协议）与 IPC。
+ *
+ * 这些接口重复调用会**抛异常**（`protocol.handle` 报
+ * `Failed to register protocol`，`ipcMain.handle` 报重复注册），
+ * 所以必须与「建窗口」分开。`activate` 重建窗口时会再进 `bootstrap()`，
+ * 没有这个守卫的话，异常发生在 `new BrowserWindow()` 之前 ——
+ * 表现为点了 Dock 图标却什么都不发生（2026-10-21 Mac 实测）。
+ */
+let setupDone = false;
+
+function setupOnce(): void {
+  if (setupDone) return;
+  setupDone = true;
+  setupSession(config);
+  registerIpcHandlers(config, () => mainWindow);
+}
+
 function focusExistingWindow(): void {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   if (mainWindow.isMinimized()) mainWindow.restore();
@@ -75,9 +93,10 @@ async function bootstrap(): Promise<void> {
     userData: app.getPath('userData'),
   });
 
+  setupOnce();
+
   mainWindow = createMainWindow(config);
   applyFailoverPolicy(mainWindow);
-  registerIpcHandlers(config, () => mainWindow);
 
   mainWindow.on('closed', () => {
     mainWindow = null;

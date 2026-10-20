@@ -56,8 +56,8 @@ OK基地课程**专用桌面播放器**，基于 Electron。
 git clone https://github.com/okyolo/okplay.git
 cd okplay
 npm install
-npm run shortcut   # 可选：在桌面建一个图标，以后双击就能开（仅 Windows）
-npm start
+npm start            # 先跑一次，确认窗口能打开（这一步同时完成构建）
+npm run shortcut     # 可选：在桌面建一个图标，以后双击就能开
 ```
 
 **macOS**
@@ -66,13 +66,16 @@ npm start
 git clone https://github.com/okyolo/okplay.git
 cd okplay
 npm install
-npm run shortcut   # 可选：在桌面生成 OKPlay-源码安装.app（双击启动，不弹终端）
-npm start
+npm start            # 先跑一次，确认窗口能打开（这一步同时完成构建）
+npm run shortcut     # 可选：在桌面生成 OKPlay-源码安装.app
 ```
 
-> macOS 上没有「快捷方式」，`npm run shortcut` 会生成一个 `.app`：
-> 图标取自 `src/assets/icon.png`，双击直接启动，日志在 `/tmp/okplay-start.log`。
+> `npm run shortcut` 每次会先跑 `npm run build`，所以单独先建图标也不会出现
+> 「双击没反应」—— 但如果构建失败，它会直接报错退出。
 >
+> macOS 上没有「快捷方式」，`npm run shortcut` 会生成一个 `.app`：
+> 图标取自 `src/assets/icon.png`，双击直接启动，日志在 `/tmp/okplay-start.log`
+> （启动失败先看这个文件）。
 > macOS 上如果首次运行提示「无法打开 Electron」，执行一次：
 > `xattr -dr com.apple.quarantine node_modules/electron/dist/Electron.app`
 

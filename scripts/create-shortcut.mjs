@@ -36,6 +36,7 @@ import { dirname, join } from 'node:path';
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 
 if (process.platform === 'darwin') {
+  ensureBuild();
   createMacShortcut();
   process.exit(0);
 }
@@ -44,6 +45,8 @@ if (process.platform !== 'win32') {
   console.error('目前只支持 Windows 与 macOS。其它平台直接用 `npm start`。');
   process.exit(1);
 }
+
+ensureBuild();
 
 const electronExe = join(root, 'node_modules', 'electron', 'dist', 'electron.exe');
 if (!existsSync(electronExe)) {
@@ -93,6 +96,44 @@ console.log('双击即可启动 OKPlay（不需要开终端）。');
 
 
 /**
+ * 快捷方式指向 Electron 二进制，它加载的是 `dist/main/index.js`。
+ * 只跑过 `npm install` 时 dist 还不存在 —— 双击会「没有窗口」，而且不报错
+ * （macOS 上尤其难看出来：日志里只有一行 Electron 的 `Unable to find Electron app`）。
+ * 所以建快捷方式之前先构建一次，把顺序依赖消掉。
+ */
+function ensureBuild() {
+  console.log('检查构建产物（npm run build）…');
+
+  /*
+   * 走 `npm run build` 而不是自己拼 tsc 命令，免得以后构建脚本改了这里不同步。
+   * `npm run shortcut` 启动时 npm 会给出 npm_execpath，用它避开 Windows 上
+   * 直接 execFile('npm') 会 EINVAL 的坑。
+   */
+  const npmCli = process.env.npm_execpath;
+
+  try {
+    if (npmCli && /\.[cm]?js$/.test(npmCli)) {
+      execFileSync(process.execPath, [npmCli, 'run', 'build'], { cwd: root, stdio: 'inherit' });
+    } else {
+      execFileSync('npm', ['run', 'build'], {
+        cwd: root,
+        stdio: 'inherit',
+        shell: process.platform === 'win32',
+      });
+    }
+  } catch {
+    console.error('构建失败。先在这个目录跑 `npm run build`，看具体报错。');
+    process.exit(1);
+  }
+
+  if (!existsSync(join(root, 'dist', 'main', 'index.js'))) {
+    console.error('构建跑完了，但 dist/main/index.js 还是不存在。');
+    process.exit(1);
+  }
+}
+
+
+/**
  * macOS：在桌面生成一个 `OKPlay-源码安装.app`。
  *
  * 启动方式与 Windows 快捷方式等价 —— 直接跑 Electron 二进制、把仓库根目录
@@ -135,7 +176,12 @@ function createMacShortcut() {
       const iconset = join(root, '.shortcut-iconset');
       execFileSync('rm', ['-rf', iconset]);
       execFileSync('mkdir', ['-p', iconset]);
-      for (const size of [16, 32, 64, 128, 256, 512]) {
+      /*
+       * iconutil 只认标准文件名（16/32/128/256/512 各带 @2x）。
+       * 别加 64 —— `icon_64x64.png` 不在标准集合里，iconutil 会整组拒绝，
+       * 结果就是「图标生成失败」。
+       */
+      for (const size of [16, 32, 128, 256, 512]) {
         execFileSync('sips', ['-z', String(size), String(size), iconSrc, '--out', join(iconset, `icon_${size}x${size}.png`)]);
         execFileSync('sips', ['-z', String(size * 2), String(size * 2), iconSrc, '--out', join(iconset, `icon_${size}x${size}@2x.png`)]);
       }

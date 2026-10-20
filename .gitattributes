@@ -13,6 +13,10 @@
 *.bat text eol=crlf
 *.cmd text eol=crlf
 
+# Shell 启动器在 macOS 上必须是 LF。CRLF 会让 shebang 变成 `/bin/bash\r`，
+# 双击 .app 后日志里只有 `bad interpreter`。
+*.sh text eol=lf
+
 # ── 其余保持仓库里的原样 ──────────────────────────────────────
 # 刻意不写 `* text=auto` —— 那会把所有文件重新规范化一遍，
 # 首次提交产生一份巨大的、与本次改动无关的 diff。

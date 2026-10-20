@@ -32,6 +32,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -191,29 +192,34 @@ function createMacShortcut() {
   // 图标：png → iconset → icns，贴到 applet 的 Resources/applet.icns
   if (existsSync(iconSrc)) {
     try {
-      const iconset = join(root, '.shortcut-iconset');
+      /*
+       * ⚠️ 目录名**必须以 `.iconset` 结尾**，否则 iconutil 直接报
+       * "Invalid Iconset" —— 之前叫 `.shortcut-iconset`，就是它导致图标永远是
+       * AppleScript 的默认图标。放临时目录，别在仓库里留垃圾。
+       */
+      const iconset = join(tmpdir(), `okplay-shortcut-${process.pid}.iconset`);
       execFileSync('rm', ['-rf', iconset]);
       execFileSync('mkdir', ['-p', iconset]);
       /*
        * iconutil 只认标准文件名（16/32/128/256/512 各带 @2x）。
-       * 别加 64 —— `icon_64x64.png` 不在标准集合里，iconutil 会整组拒绝，
-       * 结果就是「图标生成失败」。
+       * 别加 64 —— `icon_64x64.png` 不在标准集合里，iconutil 会整组拒绝。
        */
       for (const size of [16, 32, 128, 256, 512]) {
         execFileSync('sips', ['-z', String(size), String(size), iconSrc, '--out', join(iconset, `icon_${size}x${size}.png`)]);
         execFileSync('sips', ['-z', String(size * 2), String(size * 2), iconSrc, '--out', join(iconset, `icon_${size}x${size}@2x.png`)]);
       }
-      const icns = join(root, 'build', 'shortcut.icns');
+      const icns = join(tmpdir(), `okplay-shortcut-${process.pid}.icns`);
       execFileSync('iconutil', ['-c', 'icns', iconset, '-o', icns]);
       execFileSync('cp', [icns, join(out, 'Contents', 'Resources', 'applet.icns')]);
       execFileSync('rm', ['-rf', iconset, icns]);
-      // 让 Finder 重新读图标
+      // 让 Finder 重新读图标（替换后 mtime 不变的话它会继续用缓存）
       execFileSync('touch', [out]);
-    } catch {
-      console.warn('图标生成失败，.app 仍可用（会用系统默认图标）。');
+    } catch (error) {
+      console.warn(`图标生成失败，.app 仍可用（会用系统默认图标）：${error.message}`);
     }
   }
 
   console.log(`已在桌面创建：${out}`);
   console.log('双击即可启动（不弹终端）。');
+  console.log('如果图标还是旧的：执行 killall Finder 刷新图标缓存。');
 }

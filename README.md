@@ -1,8 +1,20 @@
-# OKPlay
+# OK基地-专用播放器（OKPlay）
 
-OK基地课程桌面客户端。基于 Electron。
+OK基地课程**专用桌面播放器**，基于 Electron。
 
-学员安装后打开客户端，客户端加载云端课程页面；学员在页面中输入课程专用账号和密码，即可点播课程章节、观看视频并查看课堂笔记。
+学员安装后打开客户端，客户端加载云端课程页面；学员在页面中输入课程专用账号和密码，即可点播课程章节、观看视频、查看课堂笔记，并浏览源码/模版、软件/工具、特效素材等资源库。
+
+## 界面预览
+
+| 登录 | 全部课程 |
+|---|---|
+| ![登录](screenshots/1-login.png) | ![全部课程](screenshots/2-all-courses.png) |
+
+| 源码 / 模版 | UI / 特效 / 素材 |
+|---|---|
+| ![源码模板](screenshots/3-source-library.png) | ![特效素材](screenshots/4-effects-library.png) |
+
+![资源库](screenshots/5-effects-library-grid.png)
 
 ## 仓库内容
 

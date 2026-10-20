@@ -44,19 +44,36 @@ OK基地课程**专用桌面播放器**，基于 Electron。
 > **免安装版没有安装器，所以不会自动建桌面图标** —— 双击解压目录里的
 > `创建桌面快捷方式.bat` 即可补上。源码安装同理，跑 `npm run shortcut`。
 
-**macOS** —— 只提供源码安装。
+**macOS** —— 只提供源码安装（见下方「源码安装」）。
 
-源码安装：
+### 源码安装（Windows / macOS）
+
+前提：**Node.js LTS（≥20）** 与 **git**。
+
+**Windows**
 
 ```bash
 git clone https://github.com/okyolo/okplay.git
 cd okplay
 npm install
-npm run shortcut   # 在桌面建一个图标，以后双击就能开（可选）
+npm run shortcut   # 可选：在桌面建一个图标，以后双击就能开（仅 Windows）
 npm start
 ```
 
-需要 Node.js LTS。
+**macOS**
+
+```bash
+git clone https://github.com/okyolo/okplay.git
+cd okplay
+npm install
+npm start
+```
+
+> `npm run shortcut` **只支持 Windows**（macOS 上会直接提示），macOS 每次用 `npm start` 启动；
+> 想要图标可以自己用「自动操作（Automator）」或快捷指令包一层。
+>
+> macOS 上如果首次运行提示「无法打开 Electron」，执行一次：
+> `xattr -dr com.apple.quarantine node_modules/electron/dist/Electron.app`
 
 > **国内网络提示**：`npm install` 需要下载约 100–150 MB 的 Electron 运行时。本仓库内置了镜像配置与兜底脚本（`scripts/ensure-electron.mjs`），安装时会自动处理。**不要删掉 `postinstall`。**
 

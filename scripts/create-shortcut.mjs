@@ -134,7 +134,7 @@ function ensureBuild() {
 
 
 /**
- * macOS：在桌面生成一个 `OKPlay-源码安装.app`。
+ * macOS：在桌面生成一个 `okplay.app`。
  *
  * 启动方式与 Windows 快捷方式等价 —— 直接跑 Electron 二进制、把仓库根目录
  * 作为参数传进去（不经过 `npm start`，所以不会弹终端）。
@@ -148,7 +148,7 @@ function createMacShortcut() {
   }
 
   const launcher = join(root, 'scripts', 'launch-mac.sh');
-  const out = join(process.env.HOME ?? '', 'Desktop', 'OKPlay-源码安装.app');
+  const out = join(process.env.HOME ?? '', 'Desktop', 'okplay.app');
   const iconSrc = join(root, 'src', 'assets', 'icon.png');
 
   // 覆盖旧的：重复跑不该失败

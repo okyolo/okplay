@@ -67,7 +67,7 @@ git clone https://github.com/okyolo/okplay.git
 cd okplay
 npm install
 npm start            # 先跑一次，确认窗口能打开（这一步同时完成构建）
-npm run shortcut     # 可选：在桌面生成 OKPlay-源码安装.app
+npm run shortcut     # 可选：在桌面生成 okplay.app
 ```
 
 > `npm run shortcut` 每次会先跑 `npm run build`，所以单独先建图标也不会出现

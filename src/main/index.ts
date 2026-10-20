@@ -106,11 +106,20 @@ if (!app.requestSingleInstanceLock()) {
 } else {
   app.on('second-instance', focusExistingWindow);
 
-  void app.whenReady().then(bootstrap);
+  /*
+   * `activate` **必须在 ready 之后才注册**。
+   *
+   * macOS 上在 ready 之前挂监听，事件根本不会送达（Electron 已知问题，
+   * electron-quick-start #382）—— 表现就是：关掉窗口后点 Dock 图标没反应，
+   * 只能退出重开。源码安装的 Electron 不走 LaunchServices，更容易踩到。
+   */
+  void app.whenReady().then(() => {
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) void bootstrap();
+      else focusExistingWindow();
+    });
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) void bootstrap();
-    else focusExistingWindow();
+    return bootstrap();
   });
 
   app.on('window-all-closed', () => {
